@@ -262,6 +262,9 @@
   .fill-green {
     background: #61ff35;
   }
+  .fill-lightgreen {
+    background: #b8f59b;
+  }
   .fill-red {
     background: #f34e4e;
   }
@@ -300,6 +303,11 @@
     background: transparent;
     padding: 6px 6px;
     min-width: auto;
+  }
+  /* Completed status */
+  .status-completed {
+    background: #61ff35;
+    color: #1f4f04;
   }
 
   /* Edit button */

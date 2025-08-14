@@ -3,15 +3,19 @@
 	const modalRoot = document.getElementById('modalRoot');
 	const newBtn = document.querySelector('.new-btn');
 	const API_BASE = 'http://localhost:3000';
+ 	const filterBtn = document.querySelector('.filter-btn');
+ 	const filterState = { name: '', dept: '', order: 'asc' }; // order by due date
 
 	function cryptoRandomId() {
 		return 'r_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 	}
 
 	function computeStatus(progress) {
-		if (progress >= 80) return 'Ahead';
-		if (progress <= 30) return 'At risk';
-		return 'on track';
+		const p = Number(progress) || 0;
+		if (p === 100) return 'Completed';
+		if (p < 35) return 'At risk';
+		if (p > 35 && p < 99) return 'On track';
+		return 'On track';
 	}
 
 	async function apiGetRisks() {
@@ -42,22 +46,41 @@
 		if (!res.ok) throw new Error('Failed to update tasks');
 		return await res.json();
 	}
+ 	async function apiDeleteRisk(id) {
+ 		const res = await fetch(`${API_BASE}/api/risks/${id}`, { method: 'DELETE' });
+ 		if (!res.ok) throw new Error('Failed to delete risk');
+ 		return await res.json();
+ 	}
 
 	function renderFillClass(status) {
 		const s = String(status || '').toLowerCase();
 		if (s === 'at risk') return 'fill-red';
-		if (s === 'ahead') return 'fill-purple';
-		return 'fill-green';
+		if (s === 'completed') return 'fill-green';
+		return 'fill-lightgreen';
 	}
-	function statusBadgeClass(status) {
-		const s = String(status || '').toLowerCase();
-		if (s === 'at risk') return 'status-atrisk';
-		if (s === 'ahead') return 'status-ahead';
-		return 'status-ontrack';
-	}
+ 	function statusBadgeClass(status) {
+ 		const s = String(status || '').toLowerCase();
+ 		if (s === 'at risk') return 'status-atrisk';
+ 		if (s === 'completed') return 'status-completed';
+ 		return 'status-ontrack';
+ 	}
+
+ 	function applyFilters(risks) {
+ 		let list = Array.isArray(risks) ? risks.slice() : [];
+ 		const name = filterState.name.trim().toLowerCase();
+ 		const dept = filterState.dept.trim().toLowerCase();
+ 		if (name) list = list.filter(r => String(r.risk_title || '').toLowerCase().includes(name));
+ 		if (dept) list = list.filter(r => String(r.dept || '').toLowerCase().includes(dept));
+ 		list.sort((a, b) => {
+ 			const da = new Date(a.review_date).getTime();
+ 			const db = new Date(b.review_date).getTime();
+ 			return filterState.order === 'desc' ? db - da : da - db;
+ 		});
+ 		return list;
+ 	}
 
 	async function render() {
-		const risks = await apiGetRisks();
+		const risks = applyFilters(await apiGetRisks());
 		tableBody.innerHTML = '';
 		risks.forEach(risk => {
 			const tr = document.createElement('tr');
@@ -78,25 +101,38 @@
 			const date = new Date(risk.review_date);
 			dateTd.textContent = date.toLocaleDateString(undefined, { year: 'numeric', month: 'long', day: '2-digit' });
 
+			const status = computeStatus(risk.progress || 0);
 			const progressTd = document.createElement('td');
 			progressTd.innerHTML = `
 				<div class="progress-bar">
 					<div class="progress-bar-inner">
-						<div class="progress-fill ${renderFillClass(risk.status)}" style="width:${risk.progress || 0}%"></div>
+						<div class="progress-fill ${renderFillClass(status)}" style="width:${risk.progress || 0}%"></div>
 					</div>
 					<div class="percent">${risk.progress || 0}%</div>
 				</div>
 			`;
 
 			const statusTd = document.createElement('td');
-			statusTd.innerHTML = `<span class="status-badge ${statusBadgeClass(risk.status)}">${risk.status || computeStatus(risk.progress || 0)}</span>`;
+			statusTd.innerHTML = `<span class="status-badge ${statusBadgeClass(status)}">${status}</span>`;
 
 			const actionTd = document.createElement('td');
-			const editBtn = document.createElement('button');
-			editBtn.className = 'btn-edit';
-			editBtn.textContent = 'Edit';
-			editBtn.addEventListener('click', () => openEditModal(risk.id));
-			actionTd.appendChild(editBtn);
+			if ((risk.progress || 0) === 100) {
+				const delBtn = document.createElement('button');
+				delBtn.className = 'btn-edit'; // same style as edit
+				delBtn.textContent = 'Delete';
+				delBtn.addEventListener('click', async () => {
+					if (!confirm('Delete this completed risk?')) return;
+					await apiDeleteRisk(risk.id);
+					await render();
+				});
+				actionTd.appendChild(delBtn);
+			} else {
+				const editBtn = document.createElement('button');
+				editBtn.className = 'btn-edit';
+				editBtn.textContent = 'Edit';
+				editBtn.addEventListener('click', () => openEditModal(risk.id));
+				actionTd.appendChild(editBtn);
+			}
 
 			tr.appendChild(nameTd);
 			tr.appendChild(deptTd);
@@ -196,6 +232,43 @@
 			setTaskGetter(fn => { currentTaskValues = fn; });
 		}
 	}
+
+ 	function openFilterModal() {
+ 		const container = document.createElement('div');
+ 		const nameRow = formRow('Filter by Risk Name', 'text', filterState.name);
+ 		const deptRow = formRow('Filter by Department', 'text', filterState.dept);
+ 		const sortRow = document.createElement('div');
+ 		sortRow.className = 'form-row';
+ 		const sortLabel = document.createElement('label');
+ 		sortLabel.textContent = 'Sort by Due Date';
+ 		const sortContainer = document.createElement('div');
+ 		sortContainer.style.display = 'flex';
+ 		sortContainer.style.gap = '12px';
+ 		const asc = document.createElement('label');
+ 		const ascRadio = document.createElement('input'); ascRadio.type = 'radio'; ascRadio.name = 'sortOrder'; ascRadio.value = 'asc'; ascRadio.checked = filterState.order === 'asc';
+ 		asc.appendChild(ascRadio); asc.appendChild(document.createTextNode(' Ascending'));
+ 		const desc = document.createElement('label');
+ 		const descRadio = document.createElement('input'); descRadio.type = 'radio'; descRadio.name = 'sortOrder'; descRadio.value = 'desc'; descRadio.checked = filterState.order === 'desc';
+ 		desc.appendChild(descRadio); desc.appendChild(document.createTextNode(' Descending'));
+ 		sortContainer.appendChild(asc); sortContainer.appendChild(desc);
+ 		sortRow.appendChild(sortLabel);
+ 		sortRow.appendChild(sortContainer);
+ 		container.appendChild(nameRow.row);
+ 		container.appendChild(deptRow.row);
+ 		container.appendChild(sortRow);
+ 
+ 		// live updates
+ 		nameRow.input.addEventListener('input', async () => { filterState.name = nameRow.input.value; await render(); });
+ 		deptRow.input.addEventListener('input', async () => { filterState.dept = deptRow.input.value; await render(); });
+ 		ascRadio.addEventListener('change', async () => { if (ascRadio.checked) { filterState.order = 'asc'; await render(); } });
+ 		descRadio.addEventListener('change', async () => { if (descRadio.checked) { filterState.order = 'desc'; await render(); } });
+ 
+ 		openModal('Filters', container, ({ close }) => {
+ 			return [
+ 				{ text: 'Close', variant: 'secondary', onClick: () => close() }
+ 			];
+ 		});
+ 	}
 
 	function buildRiskForm() {
 		const container = document.createElement('div');
@@ -392,8 +465,11 @@
 	function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
 
 	if (newBtn) newBtn.addEventListener('click', openNewModal);
+ 	if (filterBtn) filterBtn.addEventListener('click', openFilterModal);
 
 	render();
+ 	// realtime refresh
+ 	setInterval(render, 3000);
 
 	// Task seeds
 	function defaultTasks(riskName) {
