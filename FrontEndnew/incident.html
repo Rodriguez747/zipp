@@ -1,0 +1,92 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Incident Tracking</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/incident.css">
+</head>
+<body>
+
+  <div class="sidebar">
+    <div>
+      <div class="logo">
+        <img src="img/LOGO.png" alt="Logo" />
+        <strong>ComplyTeam</strong>
+      </div>
+      <nav>
+        <ul>
+          <li><span>🏠</span> <a href="regulatory.html">Dashboard</a></li>
+            <li><span>🔍</span> <a href="audit.html">Audit Logs</a></li>
+            <li><span>⚠️</span> <a href="findings.html">Findings</a></li>
+            <li><span>📁</span> <a href="documents.html">Documents</a></li>
+            <li class="active"><span>🚩</span> <a href="incident.html">Incidents</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="user">
+      <span>👤</span>
+      <div>
+        <strong>Jasper John Dreo</strong>
+        <small>Compliance</small>
+      </div>
+    </div>
+  </div>
+
+<div class="main-content">
+  <header>
+    <div>Incident Tracking</div>
+    <svg class="bell-icon" viewBox="0 0 24 24"><path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 1 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/></svg>
+  </header>
+
+  <div class="cards">
+    <div class="card">
+      <div class="card-icon blue">⚠️</div>
+      <h3 id="inc-open">0</h3>
+      <span>Open Incidents</span>
+    </div>
+    <div class="card">
+      <div class="card-icon red">❗</div>
+      <h3 id="inc-critical">0</h3>
+      <span>Critical Priority</span>
+    </div>
+    <div class="card">
+      <div class="card-icon yellow">⏳</div>
+      <h3 id="inc-progress">0</h3>
+      <span>In Progress</span>
+    </div>
+    <div class="card">
+      <div class="card-icon green">✅</div>
+      <h3 id="inc-resolved">0</h3>
+      <span>Resolved</span>
+    </div>
+  </div>
+
+  <div class="section-header">
+    <h2>Recent Incident Reports</h2>
+    <div class="buttons">
+      <button class="btn btn-filter" id="btnFilter">🔍 Filter</button>
+      <button class="btn btn-report" id="btnReport">+ Report Incident</button>
+      <button class="btn btn-reports">📊 Reports</button>
+    </div>
+  </div>
+
+  <table>
+    <thead>
+      <tr>
+        <th>ID</th>
+        <th>Incident Type</th>
+        <th>Reported Date</th>
+        <th>Status</th>
+        <th>Severity</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="incTableBody"></tbody>
+  </table>
+</div>
+
+<script src="incidents.js"></script>
+</body>
+</html>

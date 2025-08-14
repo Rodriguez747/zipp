@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Document Control</title>
+ <link rel="stylesheet" href="css/documents.css">
+ 
+</head>
+<body>
+
+<div class="sidebar">
+  <div>
+    <div class="logo">
+      <img src="img/LOGO.png" alt="Logo" />
+      <strong>ComplyTeam</strong>
+    </div>
+    <nav>
+      <ul>
+        <li><span>🏠</span> <a href="regulatory.html">Dashboard</a></li>
+          <li><span>🔍</span> <a href="audit.html">Audit Logs</a></li>
+          <li><span>⚠️</span> <a href="findings.html">Findings</a></li>
+          <li class="active"><span>📁</span> <a href="documents.html">Documents</a></li>
+          <li><span>🚩</span> <a href="incident.html">Incidents</a></li>
+      </ul>
+    </nav>
+  </div>
+  <div class="user">
+    <span>👤</span>
+    <div>
+      <strong>Jasper John Dreo</strong>
+      <small>Compliance</small>
+    </div>
+  </div>
+</div>
+
+  <div class="main" role="main" aria-label="Document control main content">
+    <header>
+      <div>Document Control</div>
+      <svg class="bell-icon" role="img" aria-label="Notifications" viewBox="0 0 24 24">
+        <path d="M12 22c1.1 0 2-.9 2-2h-4a2 2 0 0 0 2 2zm6-6v-5c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 1 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2v1h16v-1l-2-2z"/>
+      </svg>
+    </header>
+
+    <section aria-labelledby="findings-title" style="background: #fff; border-radius: 8px; padding: 20px;">
+      <h2 class="section-title" id="findings-title">Findings</h2>
+      <div class="buttons">
+        <button class="btn-upload" type="button" id="btnUpload">+ Upload</button>
+        <button class="btn-filter" type="button" id="btnDocFilter">Filter</button>
+      </div>
+
+      <table aria-describedby="findings-title">
+        <thead>
+          <tr>
+            <th>Department Owner</th>
+            <th>Document Approved</th>
+            <th>Status</th>
+            <th>Last Validated</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="docsTableBody"></tbody>
+      </table>
+    </section>
+  </div>
+
+<script src="documents.js"></script>
+</body>
+</html>

@@ -1,0 +1,187 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>ComplyTeam Dashboard</title>
+    <link rel="stylesheet" href="css/regulatory.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <div class="sidebar">
+    <div>
+      <div class="logo">
+        <img src="img/LOGO.png" alt="Logo" />
+        <strong>ComplyTeam</strong>
+      </div>
+      <nav>
+        <ul>
+          <li class="active"><span>🏠</span> <a href="regulatory.html">Dashboard</a></li>
+            <li><span>🔍</span> <a href="audit.html">Audit Logs</a></li>
+            <li><span>⚠️</span> <a href="findings.html">Findings</a></li>
+            <li><span>📁</span> <a href="documents.html">Documents</a></li>
+            <li><span>🚩</span> <a href="incident.html">Incidents</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="user">
+      <span>👤</span>
+      <div>
+        <strong>Jasper John Dreo</strong>
+        <small>Compliance</small>
+      </div>
+    </div>
+  </div>
+
+
+    <div class="main">
+        <div class="header">
+            Regulatory Compliance
+            <div class="search">
+                <input type="text" placeholder="Search..." />
+                <span>🔔</span>
+            </div>
+        </div>
+
+        <section class="stats">
+            <div class="card blue">Total Regulations <span id="totalRegs">0</span></div>
+            <div class="card red">Non-Compliant <span id="nonCompliant">0</span></div>
+            <div class="card green">Compliant <span id="compliant">0</span></div>
+            <div class="card yellow">Review Soon <span id="reviewSoon">0</span></div>
+        </section>
+
+        <section class="content">
+            <div class="row">
+                <div class="left">
+                    <h2>Compliance Status by Department</h2>
+                    <canvas id="complianceChart" height="200"></canvas>
+                </div>
+
+                <div class="right">
+                    <div class="pending-header">
+                        <h2>Pending Tasks</h2>
+                        <a href="#" class="view-all">View All</a>
+                    </div>
+                    <ul class="task-list" id="pendingList"></ul>
+                </div>
+            </div>
+
+            <section class="table">
+                <h2>Active Regulations</h2>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Regulation Name</th>
+                            <th>Department</th>
+                            <th>Status</th>
+                            <th>Last Review</th>
+                            <th>Next Review</th>
+                        </tr>
+                    </thead>
+                    <tbody id="regsBody"></tbody>
+                </table>
+            </section>
+
+           <div class="badges">
+        <h2>Regulations Overview</h2>
+        <div class="grid" id="regsGrid">
+            <div class="badge-item">
+            <div class="card-badge" data-code="SOX">
+                <img src="img/SOX.png" alt="SOX" class="logo" />
+                <div class="label">SOX - SARBANES-OXLEY ACT</div>
+            </div>
+            </div>
+
+            <div class="badge-item">
+            <div class="card-badge" data-code="AML">
+                <img src="img/AML.png" alt="AML" class="logo" />
+                <div class="label">AML - ANTI-MONEY LAUNDERING</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="BIR">
+                <img src="img/BIR.png" alt="BIR" class="logo" />
+                <div class="label">BIR</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="ISO">
+                <img src="img/ISO.png" alt="ISO" class="logo" />
+                <div class="label">ISO</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="GDPR">
+                <img src="img/GDPR.png" alt="GDPR" class="logo" />
+                <div class="label">GDPR</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="FDA">
+                <img src="img/FDA.png" alt="FDA" class="logo" />
+                <div class="label">FDA</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="ECA">
+                <img src="img/ECA.png" alt="ECA" class="logo" />
+                <div class="label">ECA</div>
+            </div>
+            </div>
+
+             <div class="badge-item">
+            <div class="card-badge" data-code="DPA">
+                <img src="img/DPA.png" alt="DPA" class="logo" />
+                <div class="label">DPA</div>
+            </div>
+            </div>
+
+            
+        </div>
+        </div>
+
+
+
+        </section>
+    </div>
+    <script src="regulatory.js"></script> 
+    <script>
+        const ctx = document.getElementById('complianceChart').getContext('2d');
+        const complianceChart = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: ['HR', 'Finance', 'IT', 'Legal', 'Operations'],
+                datasets: [
+                    {
+                        label: 'Compliant',
+                        data: [5, 3, 6, 2, 4],
+                        backgroundColor: '#f44336',
+                    },
+                    {
+                        label: 'Non-Compliant',
+                        data: [2, 4, 1, 3, 2],
+                        backgroundColor: '#4caf50',
+                    },
+                ],
+            },
+            options: {
+                responsive: true,
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        ticks: {
+                            stepSize: 1,
+                        },
+                    },
+                },
+            },
+        });
+    </script>
+</body>
+</html>
