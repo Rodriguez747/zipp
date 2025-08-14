@@ -707,7 +707,7 @@ app.get('/api/documents/:id/view', async (req, res) => {
    ============================================ */
 app.get('/api/regulations', async (req, res) => {
   try {
-    const rows = (await auditsDb.query('SELECT * FROM regulations ORDER BY id DESC')).rows;
+    const rows = (await auditsDb.query('SELECT * FROM regulations ORDER BY regulation_name ASC')).rows;
     res.json(rows);
   } catch (e) {
     console.error('Error fetching regulations', e);
