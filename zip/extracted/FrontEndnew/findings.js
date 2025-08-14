@@ -394,13 +394,13 @@
 		Array.from(tasksList.children).forEach(child => {
 			if (!child.classList.contains('task-item')) return;
 			const checkbox = child.querySelector('input[type="checkbox"]');
-			const weightText = child.querySelector('.weight')?.textContent || '+0%';
-			const weight = parseInt(weightText.replace(/[^0-9]/g, ''), 10) || 0;
 			const id = child.dataset.id;
-			tasks.push({ id: Number(id), done: !!(checkbox && checkbox.checked), weight });
+			tasks.push({ id: Number(id), done: !!(checkbox && checkbox.checked) });
 		});
 		if (previewEl) {
-			const progress = Math.round(tasks.reduce((sum, t) => sum + (t.done ? t.weight : 0), 0));
+			const total = tasks.length || 0;
+			const doneCount = tasks.reduce((sum, t) => sum + (t.done ? 1 : 0), 0);
+			const progress = total > 0 ? Math.round((doneCount / total) * 100) : 0;
 			previewEl.textContent = `Progress: ${progress}%`;
 		}
 		return tasks.map(({ id, done }) => ({ id, done }));
