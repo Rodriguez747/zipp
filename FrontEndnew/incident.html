@@ -43,22 +43,22 @@
   <div class="cards">
     <div class="card">
       <div class="card-icon blue">⚠️</div>
-      <h3>24</h3>
+      <h3 id="inc-open">0</h3>
       <span>Open Incidents</span>
     </div>
     <div class="card">
       <div class="card-icon red">❗</div>
-      <h3>8</h3>
+      <h3 id="inc-critical">0</h3>
       <span>Critical Priority</span>
     </div>
     <div class="card">
       <div class="card-icon yellow">⏳</div>
-      <h3>12</h3>
+      <h3 id="inc-progress">0</h3>
       <span>In Progress</span>
     </div>
     <div class="card">
       <div class="card-icon green">✅</div>
-      <h3>42</h3>
+      <h3 id="inc-resolved">0</h3>
       <span>Resolved</span>
     </div>
   </div>
@@ -66,8 +66,8 @@
   <div class="section-header">
     <h2>Recent Incident Reports</h2>
     <div class="buttons">
-      <button class="btn btn-filter">🔍 Filter</button>
-      <button class="btn btn-report">+ Report Incident</button>
+      <button class="btn btn-filter" id="btnFilter">🔍 Filter</button>
+      <button class="btn btn-report" id="btnReport">+ Report Incident</button>
       <button class="btn btn-reports">📊 Reports</button>
     </div>
   </div>
@@ -83,43 +83,10 @@
         <th>Actions</th>
       </tr>
     </thead>
-    <tbody>
-      <tr>
-        <td>123-456</td>
-        <td>GDPR Violation</td>
-        <td>2025-07-30</td>
-        <td><span class="status-resolved">Resolved</span></td>
-        <td>Critical</td>
-        <td>
-          <button class="action-btn view-btn">View</button>
-          <button class="action-btn edit-btn">Edit</button>
-        </td>
-      </tr>
-      <tr>
-        <td>789-234</td>
-        <td>Contaminated<br>Product Complaint</td>
-        <td>2025-07-30</td>
-        <td><span class="status-investigating">Investigating</span></td>
-        <td>High</td>
-        <td>
-          <button class="action-btn view-btn">View</button>
-          <button class="action-btn edit-btn">Edit</button>
-        </td>
-      </tr>
-      <tr>
-        <td>982-001</td>
-        <td>Labeling Error –<br>Missing Allergen Info</td>
-        <td>2025-07-30</td>
-        <td><span class="status-progress">In progress</span></td>
-        <td>Medium</td>
-        <td>
-          <button class="action-btn view-btn">View</button>
-          <button class="action-btn edit-btn">Edit</button>
-        </td>
-      </tr>
-    </tbody>
+    <tbody id="incTableBody"></tbody>
   </table>
 </div>
 
+<script src="incidents.js"></script>
 </body>
 </html>

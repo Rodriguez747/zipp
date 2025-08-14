@@ -45,8 +45,8 @@
     <section aria-labelledby="findings-title" style="background: #fff; border-radius: 8px; padding: 20px;">
       <h2 class="section-title" id="findings-title">Findings</h2>
       <div class="buttons">
-        <button class="btn-upload" type="button">+ Upload</button>
-        <button class="btn-filter" type="button">Filter</button>
+        <button class="btn-upload" type="button" id="btnUpload">+ Upload</button>
+        <button class="btn-filter" type="button" id="btnDocFilter">Filter</button>
       </div>
 
       <table aria-describedby="findings-title">
@@ -59,67 +59,11 @@
             <th>Actions</th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td>Regulatory Affairs</td>
-            <td>11-05-2025</td>
-            <td class="status">Validated</td>
-            <td>31-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Regulatory Affairs</td>
-            <td>02-04-2025</td>
-            <td class="status">Validated</td>
-            <td>30-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Customer Service</td>
-            <td>22-07-2025</td>
-            <td class="status">Under Review</td>
-            <td><span class="dash">—</span></td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Quality Assurance</td>
-            <td>10-03-2025</td>
-            <td class="status">Validated</td>
-            <td>15-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Production/QA</td>
-            <td>20-01-2025</td>
-            <td class="status">Validated</td>
-            <td>28-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Procurement</td>
-            <td>25-02-2025</td>
-            <td class="status">Validated</td>
-            <td>29-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Compliance</td>
-            <td>28-06-2025</td>
-            <td class="status">Validated</td>
-            <td>31-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-          <tr>
-            <td>Regulatory Affairs</td>
-            <td>28-06-2025</td>
-            <td class="status">Validated</td>
-            <td>28-07-2025</td>
-            <td class="actions"><a href="#">View</a><a href="#">Download</a></td>
-          </tr>
-        </tbody>
+        <tbody id="docsTableBody"></tbody>
       </table>
     </section>
   </div>
 
+<script src="documents.js"></script>
 </body>
 </html>

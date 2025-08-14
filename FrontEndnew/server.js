@@ -5,6 +5,8 @@ const express = require('express');
 const bodyParser = require('body-parser');
 const { Client } = require('pg');
 const cors = require('cors');
+const multer = require('multer');
+const upload = multer();
 
 const app = express();
 app.use(cors());
@@ -47,6 +49,41 @@ async function ensureRisksSchema() {
       label VARCHAR(255) NOT NULL,
       weight INTEGER NOT NULL DEFAULT 0,
       done BOOLEAN NOT NULL DEFAULT FALSE
+    );
+  `);
+  // Incidents
+  await auditsDb.query(`
+    CREATE TABLE IF NOT EXISTS incidents (
+      incident_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      incident_type VARCHAR(255) NOT NULL,
+      date_reported DATE NOT NULL,
+      status VARCHAR(50) NOT NULL,
+      severity_level VARCHAR(50) NOT NULL,
+      risk_id INTEGER REFERENCES risks(risk_id) ON DELETE SET NULL
+    );
+  `);
+  // Documents
+  await auditsDb.query(`
+    CREATE TABLE IF NOT EXISTS policy_documents (
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      owner_dept VARCHAR(255) NOT NULL,
+      approval_status VARCHAR(50) NOT NULL,
+      last_review DATE,
+      document_approved BOOLEAN NOT NULL DEFAULT FALSE,
+      file_name TEXT,
+      file_data BYTEA
+    );
+  `);
+  // Regulations for dashboard
+  await auditsDb.query(`
+    CREATE TABLE IF NOT EXISTS regulations (
+      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      regulation_name TEXT NOT NULL,
+      department TEXT NOT NULL,
+      status TEXT NOT NULL,
+      last_review DATE,
+      next_review DATE,
+      summary TEXT
     );
   `);
 }
@@ -316,6 +353,37 @@ function defaultTasks(riskName) {
   ];
 }
 
+async function computeRiskProgress(riskId) {
+  const prog = await auditsDb.query(
+    `SELECT COALESCE(ROUND(CASE WHEN SUM(weight) > 0
+              THEN SUM(CASE WHEN done THEN weight ELSE 0 END)::float / SUM(weight) * 100
+              ELSE 0 END), 0) AS progress
+     FROM risk_tasks WHERE risk_id = $1`,
+    [riskId]
+  );
+  return Number(prog.rows[0]?.progress || 0);
+}
+
+function mapProgressToIncidentStatus(progress) {
+  const p = Number(progress) || 0;
+  if (p === 100) return 'resolved';
+  if (p < 35) return 'investigating';
+  if (p > 35 && p < 99) return 'in progress';
+  return 'in progress';
+}
+
+async function logAudit(auditName, dept, status) {
+  try {
+    await auditsDb.query(
+      `INSERT INTO audits (audit_name, dept_audited, auditor, audit_date, status)
+       VALUES ($1, $2, $3, NOW(), $4)`,
+      [auditName, dept || 'N/A', 'system', status || 'pending']
+    );
+  } catch (e) {
+    console.error('Audit log failed', e);
+  }
+}
+
 // GET all risks (with progress)
 app.get('/api/risks', async (req, res) => {
   try {
@@ -350,7 +418,7 @@ app.get('/api/risks/:id', async (req, res) => {
   const { id } = req.params;
   try {
     const riskResult = await auditsDb.query(
-      `SELECT risk_id AS id, risk_title FROM risks WHERE risk_id = $1`,
+      `SELECT risk_id AS id, risk_title, dept FROM risks WHERE risk_id = $1`,
       [id]
     );
 
@@ -435,6 +503,9 @@ app.post('/api/risks', async (req, res) => {
 
     await auditsDb.query('COMMIT');
 
+    // Log audit
+    logAudit(`Risk created: ${risk_title}`, dept, 'pending');
+
     res.json({ success: true, id: riskId });
   } catch (error) {
     try { await auditsDb.query('ROLLBACK'); } catch (_) {}
@@ -466,17 +537,20 @@ app.put('/api/risks/:id/tasks', async (req, res) => {
     }
 
     // Recalculate progress to return for convenience
-    const progResult = await auditsDb.query(
-      `SELECT COALESCE(ROUND(CASE WHEN SUM(weight) > 0
-                THEN SUM(CASE WHEN done THEN weight ELSE 0 END)::float / SUM(weight) * 100
-                ELSE 0 END), 0) AS progress
-       FROM risk_tasks WHERE risk_id = $1`,
-      [riskId]
-    );
+    const progress = await computeRiskProgress(riskId);
 
     await auditsDb.query('COMMIT');
 
-    res.json({ success: true, progress: progResult.rows[0]?.progress ?? 0 });
+    // Update related incidents' status if linked
+    try {
+      const derived = mapProgressToIncidentStatus(progress);
+      await auditsDb.query('UPDATE incidents SET status = $2 WHERE risk_id = $1', [riskId, derived]);
+      logAudit(`Risk progress updated (ID ${riskId}) -> ${progress}%`, null, derived === 'resolved' ? 'completed' : 'in progress');
+    } catch (e) {
+      console.error('Failed to sync incidents status', e);
+    }
+
+    res.json({ success: true, progress });
   } catch (err) {
     try { await auditsDb.query('ROLLBACK'); } catch (_) {}
     console.error('Error updating tasks:', err);
@@ -490,12 +564,202 @@ app.delete('/api/risks/:id', async (req, res) => {
   try {
     await auditsDb.query('DELETE FROM risk_tasks WHERE risk_id = $1', [id]); // deletes child records
     await auditsDb.query('DELETE FROM risks WHERE risk_id = $1', [id]);      // deletes parent record
+    logAudit(`Risk deleted (ID ${id})`, null, 'completed');
     res.json({ success: true });
   } catch (err) {
     res.status(500).json({ error: 'Failed to delete risk' });
   }
 });
 
+/* ============================================
+   >>> INCIDENTS API <<<
+   ============================================ */
+app.get('/api/incidents', async (req, res) => {
+  try {
+    const rows = (await auditsDb.query('SELECT * FROM incidents ORDER BY date_reported DESC')).rows;
+    // For each, compute derived status from risk progress if linked
+    const enriched = [];
+    for (const inc of rows) {
+      let derived_status = inc.status;
+      if (inc.risk_id) {
+        const prog = await computeRiskProgress(inc.risk_id);
+        derived_status = mapProgressToIncidentStatus(prog);
+      }
+      enriched.push({ ...inc, derived_status });
+    }
+    res.json(enriched);
+  } catch (e) {
+    console.error('Error fetching incidents', e);
+    res.status(500).json({ error: 'Failed to fetch incidents' });
+  }
+});
+
+app.post('/api/incidents', async (req, res) => {
+  const { incident_type, date_reported, status, severity_level, risk_id } = req.body;
+  try {
+    const out = await auditsDb.query(
+      `INSERT INTO incidents (incident_type, date_reported, status, severity_level, risk_id)
+       VALUES ($1, $2, $3, $4, $5) RETURNING *`,
+      [incident_type, date_reported, status || 'investigating', severity_level, risk_id || null]
+    );
+    logAudit(`Incident reported: ${incident_type}`, null, 'pending');
+    res.json(out.rows[0]);
+  } catch (e) {
+    console.error('Error creating incident', e);
+    res.status(500).json({ error: 'Failed to create incident' });
+  }
+});
+
+app.put('/api/incidents/:id', async (req, res) => {
+  const { id } = req.params;
+  const { incident_type, date_reported, status, severity_level, risk_id } = req.body;
+  try {
+    const out = await auditsDb.query(
+      `UPDATE incidents SET incident_type=$2, date_reported=$3, status=$4, severity_level=$5, risk_id=$6
+       WHERE incident_id=$1 RETURNING *`,
+      [id, incident_type, date_reported, status, severity_level, risk_id || null]
+    );
+    logAudit(`Incident updated: ${incident_type || id}`, null, status || 'pending');
+    res.json(out.rows[0]);
+  } catch (e) {
+    console.error('Error updating incident', e);
+    res.status(500).json({ error: 'Failed to update incident' });
+  }
+});
+
+app.delete('/api/incidents/:id', async (req, res) => {
+  const { id } = req.params;
+  try {
+    await auditsDb.query('DELETE FROM incidents WHERE incident_id=$1', [id]);
+    logAudit(`Incident deleted: ${id}`, null, 'completed');
+    res.json({ success: true });
+  } catch (e) {
+    console.error('Error deleting incident', e);
+    res.status(500).json({ error: 'Failed to delete incident' });
+  }
+});
+
+/* ============================================
+   >>> DOCUMENTS API <<<
+   ============================================ */
+app.get('/api/documents', async (req, res) => {
+  const { owner, status } = req.query;
+  try {
+    const clauses = [];
+    const params = [];
+    if (owner) { params.push(`%${owner}%`); clauses.push(`owner_dept ILIKE $${params.length}`); }
+    if (status) { params.push(status); clauses.push(`approval_status = $${params.length}`); }
+    const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
+    const rows = (await auditsDb.query(`SELECT id, owner_dept, approval_status, last_review, document_approved, file_name FROM policy_documents ${where} ORDER BY id DESC`, params)).rows;
+    res.json(rows);
+  } catch (e) {
+    console.error('Error fetching documents', e);
+    res.status(500).json({ error: 'Failed to fetch documents' });
+  }
+});
+
+app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
+  try {
+    const { owner_dept, approval_status, last_review, document_approved } = req.body;
+    const file = req.file;
+    const out = await auditsDb.query(
+      `INSERT INTO policy_documents (owner_dept, approval_status, last_review, document_approved, file_name, file_data)
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+      [owner_dept, approval_status, last_review || null, String(document_approved) === 'true', file?.originalname || null, file?.buffer || null]
+    );
+    logAudit(`Document uploaded: ${file?.originalname || ''}`, owner_dept, approval_status);
+    res.json({ success: true, id: out.rows[0].id });
+  } catch (e) {
+    console.error('Upload failed', e);
+    res.status(500).json({ error: 'Upload failed' });
+  }
+});
+
+app.get('/api/documents/:id/download', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE id=$1', [id])).rows[0];
+    if (!row || !row.file_data) return res.status(404).end();
+    res.setHeader('Content-Disposition', `attachment; filename="${row.file_name || 'file'}"`);
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(row.file_data);
+  } catch (e) {
+    console.error('Download failed', e);
+    res.status(500).end();
+  }
+});
+
+app.get('/api/documents/:id/view', async (req, res) => {
+  const { id } = req.params;
+  try {
+    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE id=$1', [id])).rows[0];
+    if (!row || !row.file_data) return res.status(404).end();
+    res.setHeader('Content-Type', 'application/octet-stream');
+    res.send(row.file_data);
+  } catch (e) {
+    console.error('View failed', e);
+    res.status(500).end();
+  }
+});
+
+/* ============================================
+   >>> REGULATIONS & DASHBOARD API <<<
+   ============================================ */
+app.get('/api/regulations', async (req, res) => {
+  try {
+    const rows = (await auditsDb.query('SELECT * FROM regulations ORDER BY id DESC')).rows;
+    res.json(rows);
+  } catch (e) {
+    console.error('Error fetching regulations', e);
+    res.status(500).json({ error: 'Failed to fetch regulations' });
+  }
+});
+
+app.get('/api/dashboard/compliance-status', async (req, res) => {
+  try {
+    const rows = (await auditsDb.query('SELECT status FROM incidents')).rows;
+    const counts = rows.reduce((acc, r) => { const s = String(r.status || '').toLowerCase(); acc[s] = (acc[s]||0)+1; return acc; }, {});
+    const compliant = (counts['investigating'] || 0) + (counts['in progress'] || 0);
+    const non_compliant = (counts['resolved'] || 0);
+    res.json({ compliant, non_compliant });
+  } catch (e) {
+    console.error('Dashboard status failed', e);
+    res.status(500).json({ error: 'Failed' });
+  }
+});
+
+app.get('/api/dashboard/pending', async (req, res) => {
+  try {
+    const pending = [];
+    // risks with progress < 100
+    const risks = (await auditsDb.query(`
+      SELECT r.risk_id AS id, r.risk_title, r.dept, r.review_date,
+        COALESCE(ROUND(CASE WHEN SUM(rt.weight)>0 THEN SUM(CASE WHEN rt.done THEN rt.weight ELSE 0 END)::float / SUM(rt.weight) * 100 ELSE 0 END),0) AS progress
+      FROM risks r LEFT JOIN risk_tasks rt ON r.risk_id=rt.risk_id GROUP BY r.risk_id`)).rows;
+    risks.filter(r => Number(r.progress) < 100).forEach(r => {
+      pending.push({ type: 'risk', title: r.risk_title, dueDate: r.review_date, progress: r.progress });
+    });
+    // documents not approved/validated
+    const docs = (await auditsDb.query('SELECT * FROM policy_documents')).rows;
+    docs.filter(d => !d.document_approved || (String(d.approval_status||'').toLowerCase() !== 'approved')).forEach(d => {
+      pending.push({ type: 'document', title: d.file_name || d.owner_dept, dueDate: d.last_review || null, status: d.approval_status });
+    });
+    // incidents not resolved
+    const incs = (await auditsDb.query('SELECT * FROM incidents')).rows;
+    incs.filter(i => String(i.status||'').toLowerCase() !== 'resolved').forEach(i => {
+      pending.push({ type: 'incident', title: i.incident_type, dueDate: i.date_reported, status: i.status });
+    });
+    // audits not completed
+    const auds = (await auditsDb.query('SELECT * FROM audits')).rows;
+    auds.filter(a => String(a.status||'').toLowerCase() !== 'completed').forEach(a => {
+      pending.push({ type: 'audit', title: a.audit_name, dueDate: a.audit_date, status: a.status });
+    });
+    res.json(pending.slice(0, 20));
+  } catch (e) {
+    console.error('Pending failed', e);
+    res.status(500).json({ error: 'Failed' });
+  }
+});
 
 /* ============================================
    >>> SERVER START <<<
