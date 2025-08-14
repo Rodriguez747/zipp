@@ -2,3 +2,22 @@
 ✅ Connected to AUDITS database
 ✅ Ensured risks schema
 ✅ Connected to USERS database
+node:events:496
+      throw er; // Unhandled 'error' event
+      ^
+
+Error: Connection terminated unexpectedly
+    at Connection.<anonymous> (/workspace/FrontEndnew/node_modules/pg/lib/client.js:136:73)
+    at Object.onceWrapper (node:events:632:28)
+    at Connection.emit (node:events:518:28)
+    at Socket.<anonymous> (/workspace/FrontEndnew/node_modules/pg/lib/connection.js:62:12)
+    at Socket.emit (node:events:530:35)
+    at TCP.<anonymous> (node:net:351:12)
+Emitted 'error' event on Client instance at:
+    at Client._handleErrorEvent (/workspace/FrontEndnew/node_modules/pg/lib/client.js:350:10)
+    at Connection.<anonymous> (/workspace/FrontEndnew/node_modules/pg/lib/client.js:154:16)
+    at Object.onceWrapper (node:events:632:28)
+    [... lines matching original stack trace ...]
+    at TCP.<anonymous> (node:net:351:12)
+
+Node.js v22.16.0
