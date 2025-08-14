@@ -65,7 +65,7 @@ async function ensureRisksSchema() {
   // Documents
   await auditsDb.query(`
     CREATE TABLE IF NOT EXISTS policy_documents (
-      id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+      document_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
       owner_dept VARCHAR(255) NOT NULL,
       approval_status VARCHAR(50) NOT NULL,
       last_review DATE,
@@ -650,7 +650,7 @@ app.get('/api/documents', async (req, res) => {
     if (owner) { params.push(`%${owner}%`); clauses.push(`owner_dept ILIKE $${params.length}`); }
     if (status) { params.push(status); clauses.push(`approval_status = $${params.length}`); }
     const where = clauses.length ? `WHERE ${clauses.join(' AND ')}` : '';
-    const rows = (await auditsDb.query(`SELECT id, owner_dept, approval_status, last_review, document_approved, file_name FROM policy_documents ${where} ORDER BY id DESC`, params)).rows;
+    const rows = (await auditsDb.query(`SELECT document_id, owner_dept, approval_status, last_review, document_approved, file_name FROM policy_documents ${where} ORDER BY document_id DESC`, params)).rows;
     res.json(rows);
   } catch (e) {
     console.error('Error fetching documents', e);
@@ -664,11 +664,11 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
     const file = req.file;
     const out = await auditsDb.query(
       `INSERT INTO policy_documents (owner_dept, approval_status, last_review, document_approved, file_name, file_data)
-       VALUES ($1, $2, $3, $4, $5, $6) RETURNING id`,
+       VALUES ($1, $2, $3, $4, $5, $6) RETURNING document_id`,
       [owner_dept, approval_status, last_review || null, String(document_approved) === 'true', file?.originalname || null, file?.buffer || null]
     );
     logAudit(`Document uploaded: ${file?.originalname || ''}`, owner_dept, approval_status);
-    res.json({ success: true, id: out.rows[0].id });
+    res.json({ success: true, document_id: out.rows[0].document_id });
   } catch (e) {
     console.error('Upload failed', e);
     res.status(500).json({ error: 'Upload failed' });
@@ -678,7 +678,7 @@ app.post('/api/documents/upload', upload.single('file'), async (req, res) => {
 app.get('/api/documents/:id/download', async (req, res) => {
   const { id } = req.params;
   try {
-    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE id=$1', [id])).rows[0];
+    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE document_id=$1', [id])).rows[0];
     if (!row || !row.file_data) return res.status(404).end();
     res.setHeader('Content-Disposition', `attachment; filename="${row.file_name || 'file'}"`);
     res.setHeader('Content-Type', 'application/octet-stream');
@@ -692,7 +692,7 @@ app.get('/api/documents/:id/download', async (req, res) => {
 app.get('/api/documents/:id/view', async (req, res) => {
   const { id } = req.params;
   try {
-    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE id=$1', [id])).rows[0];
+    const row = (await auditsDb.query('SELECT file_name, file_data FROM policy_documents WHERE document_id=$1', [id])).rows[0];
     if (!row || !row.file_data) return res.status(404).end();
     res.setHeader('Content-Type', 'application/octet-stream');
     res.send(row.file_data);

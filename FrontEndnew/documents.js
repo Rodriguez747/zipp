@@ -24,8 +24,8 @@
         <td class="status">${d.approval_status||''}</td>
         <td>${d.last_review ? new Date(d.last_review).toISOString().slice(0,10) : '—'}</td>
         <td class="actions">
-          <a href="#" data-view="${d.id}">View</a>
-          <a href="#" data-dl="${d.id}">Download</a>
+          <a href="#" data-view="${d.document_id}">View</a>
+          <a href="#" data-dl="${d.document_id}">Download</a>
         </td>
       `;
       tbody.appendChild(tr);
