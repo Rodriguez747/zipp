@@ -147,9 +147,47 @@ app.post('/audits', async (req, res) => {
 app.get('/api/risks', async (req, res) => {
   try {
     const result = await auditsDb.query(`
-      SELECT risk_id AS id, risk_title, dept, review_date, 0 AS progress, 'on track' AS status
-      FROM risks
-      ORDER BY review_date ASC
+      SELECT 
+        r.risk_id AS id,
+        r.risk_title,
+        r.dept,
+        r.review_date,
+        COALESCE(
+          (
+            CASE WHEN tw.total_weight > 0 
+                 THEN ROUND((COALESCE(dw.done_weight, 0)::numeric / tw.total_weight::numeric) * 100)
+                 ELSE 0
+            END
+          )::int, 0
+        ) AS progress,
+        CASE
+          WHEN (
+            CASE WHEN tw.total_weight > 0 
+                 THEN ROUND((COALESCE(dw.done_weight, 0)::numeric / tw.total_weight::numeric) * 100)
+                 ELSE 0
+            END
+          ) >= 80 THEN 'Ahead'
+          WHEN (
+            CASE WHEN tw.total_weight > 0 
+                 THEN ROUND((COALESCE(dw.done_weight, 0)::numeric / tw.total_weight::numeric) * 100)
+                 ELSE 0
+            END
+          ) <= 30 THEN 'At risk'
+          ELSE 'on track'
+        END AS status
+      FROM risks r
+      LEFT JOIN (
+        SELECT risk_id, SUM(weight) AS total_weight
+        FROM risk_tasks
+        GROUP BY risk_id
+      ) tw ON tw.risk_id = r.risk_id
+      LEFT JOIN (
+        SELECT risk_id, SUM(weight) AS done_weight
+        FROM risk_tasks
+        WHERE done = true
+        GROUP BY risk_id
+      ) dw ON dw.risk_id = r.risk_id
+      ORDER BY r.review_date ASC
     `);
     res.json(result.rows);
   } catch (error) {
