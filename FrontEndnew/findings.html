@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Risk Assessment - ComplyTeam</title>
+<link rel="stylesheet" href="css/findings.css">
+</head>
+<body>
+
+  <div class="sidebar">
+    <div>
+      <div class="logo">
+        <img src="img/LOGO.png" alt="Logo" />
+        <strong>ComplyTeam</strong>
+      </div>
+      <nav>
+        <ul>
+          <li><span>🏠</span> <a href="regulatory.html">Dashboard</a></li>
+            <li><span>🔍</span> <a href="audit.html">Audit Logs</a></li>
+            <li class="active"><span>⚠️</span> <a href="findings.html">Findings</a></li>
+            <li><span>📁</span> <a href="documents.html">Documents</a></li>
+            <li><span>🚩</span> <a href="incident.html">Incidents</a></li>
+        </ul>
+      </nav>
+    </div>
+    <div class="user">
+      <span>👤</span>
+      <div>
+        <strong>Jasper John Dreo</strong>
+        <small>Compliance</small>
+      </div>
+    </div>
+  </div>
+
+
+<div class="main">
+  <div class="topbar">
+    <h1>Risk Assessment</h1>
+    <div class="bell">🔔</div>
+  </div>
+
+  <div class="card">
+    <h2>Risk Register</h2>
+    <div class="actions">
+      <button class="filter-btn">🔍 Filter</button>
+      <button class="new-btn">+ New</button>
+    </div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Risk name</th>
+          <th>Assigned To</th>
+          <th>Due Date</th>
+          <th>Progress Completion</th>
+          <th>Status</th>
+          <th></th>
+        </tr>
+      </thead>
+      <tbody id="risksTableBody"></tbody>
+    </table>
+  </div>
+  <!-- Modal root -->
+  <div id="modalRoot"></div>
+
+  
+</div>
+ <script src="findings.js"></script>
+</body>
+</html>
