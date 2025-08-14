@@ -378,13 +378,15 @@
 			const weightText = child.querySelector('.weight')?.textContent || '+0%';
 			const weight = parseInt(weightText.replace(/[^0-9]/g, ''), 10) || 0;
 			const id = child.dataset.id;
-			tasks.push({ id: Number(id), done: !!(checkbox && checkbox.checked), weight });
+			const labelSpan = child.querySelector('label span');
+			const label = labelSpan ? labelSpan.textContent : 'Task';
+			tasks.push({ id: Number(id), label, weight, done: !!(checkbox && checkbox.checked) });
 		});
 		if (previewEl) {
 			const progress = Math.round(tasks.reduce((sum, t) => sum + (t.done ? t.weight : 0), 0));
 			previewEl.textContent = `Progress: ${progress}%`;
 		}
-		return tasks.map(({ id, done }) => ({ id, done }));
+		return tasks.map(({ id, done, label, weight }) => ({ id, done, label, weight }));
 	}
 
 	function clamp(n, min, max) { return Math.max(min, Math.min(max, n)); }
