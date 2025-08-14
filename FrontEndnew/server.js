@@ -354,12 +354,40 @@ app.get('/api/risks/:id', async (req, res) => {
       [id]
     );
 
-    const taskResult = await auditsDb.query(
+    if (riskResult.rows.length === 0) {
+      return res.status(404).json({ error: 'Risk not found' });
+    }
+
+    const risk = riskResult.rows[0];
+
+    let taskResult = await auditsDb.query(
       `SELECT id, label, weight, done FROM risk_tasks WHERE risk_id = $1`,
       [id]
     );
 
-    const risk = riskResult.rows[0];
+    // Auto-seed tasks for risks inserted directly in DB with no tasks
+    if (taskResult.rows.length === 0) {
+      const seeds = defaultTasks(risk.risk_title);
+      await auditsDb.query('BEGIN');
+      try {
+        for (const t of seeds) {
+          await auditsDb.query(
+            'INSERT INTO risk_tasks (risk_id, label, weight, done) VALUES ($1, $2, $3, $4)',
+            [id, t.label, t.weight, t.done]
+          );
+        }
+        await auditsDb.query('COMMIT');
+      } catch (e) {
+        try { await auditsDb.query('ROLLBACK'); } catch (_) {}
+        throw e;
+      }
+
+      taskResult = await auditsDb.query(
+        `SELECT id, label, weight, done FROM risk_tasks WHERE risk_id = $1`,
+        [id]
+      );
+    }
+
     const tasks = taskResult.rows;
 
     const totalWeight = tasks.reduce((sum, t) => sum + t.weight, 0);
