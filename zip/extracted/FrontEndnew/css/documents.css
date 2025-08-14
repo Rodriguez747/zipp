@@ -1,0 +1,210 @@
+ @import url('https://fonts.googleapis.com/css2?family=Inter&display=swap');
+
+    *, *::before, *::after {
+      box-sizing: border-box;
+    }
+    body {
+      margin: 0;
+      font-family: 'Inter', sans-serif, Arial, Helvetica, sans-serif;
+      background-color: #896698;
+      color: #111;
+    }
+
+    /* Sidebar */
+    .sidebar {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 220px;
+      height: 100vh;
+      background: #F3E4F9;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 20px 0;
+    }
+    .sidebar .logo {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-left: 20px;
+      margin-bottom: 30px;
+    }
+    .sidebar .logo img {
+      width: 40px;
+      height: auto;
+    }
+    .sidebar .logo strong {
+      font-weight: 700;
+      font-size: 18px;
+      color: #004080;
+    }
+    .sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0 0 40px 0;
+    }
+    .sidebar nav ul li {
+      padding: 14px 20px;
+      font-size: 15px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      font-weight: 500;
+    }
+    .sidebar nav ul li a {
+      text-decoration: none;
+      color: #111;
+      flex-grow: 1;
+    }
+    .sidebar nav ul li:hover,
+    .sidebar nav ul li.active {
+      background: #E9D8F0;
+      font-weight: 600;
+    }
+
+    .sidebar .user {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      margin-left: 20px;
+      color: #222;
+    }
+    .sidebar .user span {
+      font-size: 24px;
+    }
+    .sidebar .user strong {
+      font-weight: 600;
+      font-size: 14px;
+      display: block;
+    }
+
+    /* Main content */
+    .main {
+      margin-left: 220px;
+      padding: 20px;
+      display: flex;
+      flex-direction: column;
+      min-height: 100vh;
+    }
+
+    header {
+      background-color: #F3E4F9;
+      color: black;
+      font-weight: 600;
+      font-size: 20px;
+      border-radius: 8px;
+      padding: 12px 20px;
+      margin-bottom: 20px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    header .bell-icon {
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      fill: #fff;
+    }
+
+    .section-title {
+      font-weight: 700;
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: #111;
+    }
+
+    .buttons {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 12px;
+      justify-content: flex-end;
+    }
+
+    .btn-upload {
+      background-color: #2563EB;
+      border: none;
+      border-radius: 6px;
+      color: white;
+      padding: 7px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-upload:hover {
+      background-color: #1E40AF;
+    }
+
+    .btn-filter {
+      background-color: #9CA3AF;
+      border: none;
+      border-radius: 6px;
+      color: black;
+      padding: 7px 14px;
+      font-size: 14px;
+      cursor: pointer;
+      font-weight: 600;
+    }
+    .btn-filter:hover {
+      background-color: #6B7280;
+      color: white;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: white;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    thead tr {
+      background-color: #F3E4F9;
+    }
+    thead th {
+      font-weight: 600;
+      padding: 14px 12px;
+      text-align: left;
+      color: #111;
+      border: 1px solid #e5e7eb;
+    }
+    tbody td {
+      padding: 12px;
+      font-size: 14px;
+      vertical-align: middle;
+      border: 1px solid #e5e7eb;
+      background-color: #fff;
+      color: #111;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    tbody td.document {
+      font-weight: 700;
+      white-space: normal;
+    }
+    .actions {
+      white-space: nowrap;
+    }
+    .actions a {
+      font-weight: 600;
+      color: #2563EB;
+      text-decoration: none;
+      margin-right: 10px;
+      cursor: pointer;
+    }
+    .actions a:last-child {
+      color: #222;
+      font-weight: 700;
+    }
+    .actions a:hover {
+      text-decoration: underline;
+    }
+    tbody td.status {
+      font-weight: 700;
+    }
+    .dash {
+      color: #999;
+      font-weight: 600;
+    }
