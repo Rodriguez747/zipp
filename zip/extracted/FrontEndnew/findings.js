@@ -4,6 +4,36 @@
 	const newBtn = document.querySelector('.new-btn');
 	const API_BASE = 'http://localhost:3000';
 
+	// Toast notifications
+	function ensureToastContainer() {
+		let container = document.getElementById('toastContainer');
+		if (!container) {
+			container = document.createElement('div');
+			container.id = 'toastContainer';
+			container.className = 'toast-container';
+			document.body.appendChild(container);
+		}
+		return container;
+	}
+	function showToast(message) {
+		const container = ensureToastContainer();
+		const toast = document.createElement('div');
+		toast.className = 'toast';
+		toast.textContent = message;
+		container.appendChild(toast);
+		// trigger animation
+		requestAnimationFrame(() => {
+			toast.classList.add('show');
+		});
+		setTimeout(() => {
+			toast.classList.remove('show');
+			toast.classList.add('hide');
+			setTimeout(() => {
+				if (toast.parentNode === container) container.removeChild(toast);
+			}, 300);
+		}, 2000);
+	}
+
 	function cryptoRandomId() {
 		return 'r_' + Math.random().toString(36).slice(2, 9) + Date.now().toString(36).slice(-4);
 	}
@@ -119,6 +149,7 @@
 					await apiCreateRisk({ risk_title: values.title, dept: values.dept, review_date: values.dueDate, tasks });
 					await render();
 					close();
+					showToast('added succesfully!');
 				} }
 			];
 		});
@@ -134,6 +165,7 @@
 					await apiUpdateRiskTasks(riskId, updates);
 					await render();
 					close();
+					showToast('Edit Succesfully');
 				} }
 			];
 		});
@@ -457,6 +489,7 @@
 			await loadRisks();
 			// Optionally, reset the form
 			this.reset();
+			showToast('added succesfully!');
 		} else {
 			alert('Failed to save finding!');
 		}
