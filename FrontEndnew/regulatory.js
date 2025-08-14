@@ -24,7 +24,7 @@
     rows.forEach(r=>{
       const tr=document.createElement('tr');
       tr.innerHTML = `
-        <td>${r.regulation_name}</td>
+        <td>${r.name}</td>
         <td>${r.department}</td>
         <td>${r.status}</td>
         <td>${r.last_review ? new Date(r.last_review).toISOString().slice(0,10) : ''}</td>
